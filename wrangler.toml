@@ -1,0 +1,12 @@
+name = "library-wrapper"
+main = "src/worker.ts"
+compatibility_date = "2025-01-01"
+
+[assets]
+directory = "./public"
+# Serve static files first; only /api/* reaches the worker.
+run_worker_first = ["/api/*"]
+
+[vars]
+# Alma SRU endpoint: https://<host>/view/sru/<INSTITUTION_CODE>
+ALMA_SRU_URL = "https://gegnir.alma.exlibrisgroup.com/view/sru/354ILC_ALM"

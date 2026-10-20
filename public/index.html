@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Library Search</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 42rem; margin: 2rem auto; padding: 0 1rem; }
+    form { display: flex; gap: .5rem; }
+    input[name=q] { flex: 1; }
+    input, select, button { font: inherit; padding: .4rem; }
+    ul { list-style: none; padding: 0; }
+    li { padding: .75rem 0; border-bottom: 1px solid #ddd; }
+    .meta { color: #666; font-size: .9rem; }
+  </style>
+</head>
+<body>
+  <h1>Library Search</h1>
+  <form id="search-form">
+    <input name="q" type="search" placeholder="Search the catalogue" required>
+    <select name="index">
+      <option value="any">Everything</option>
+      <option value="title">Title</option>
+      <option value="author">Author</option>
+      <option value="subject">Subject</option>
+      <option value="isbn">ISBN</option>
+    </select>
+    <button>Search</button>
+  </form>
+  <p id="status" role="status"></p>
+  <ul id="results"></ul>
+  <script src="/app.js"></script>
+</body>
+</html>
