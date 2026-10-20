@@ -13,7 +13,7 @@ const SEARCH_INDEXES: Record<string, string> = {
 
 // SRU clauses on RDA content type (MARC 336) and media type (MARC 337).
 const FORMAT_FILTERS: Record<Format, string> = {
-  book: "alma.content_type_code=txt and alma.media_type_code=n",
+  book: "alma.content_type_code=txt and alma.media_type_code=n and alma.bib_level=m",
   ebook: "alma.content_type_code=txt and alma.media_type_code=c",
   audiobook: "alma.content_type_code=spw",
   film: "alma.content_type_code=tdi",
@@ -21,7 +21,8 @@ const FORMAT_FILTERS: Record<Format, string> = {
   score: "alma.content_type_code=ntm",
 };
 
-const MAX_RECORDS = 20;
+// The most Alma returns per request.
+const MAX_RECORDS = 50;
 
 export async function search(q: string, indexName = "any", format = "book"): Promise<SearchResponse> {
   q = q.trim();
@@ -65,11 +66,18 @@ function parseRecord(record: string): BookResult {
   return {
     mmsId: controlField(record, "001"),
     title: tidy([...sub("245", "a"), ...sub("245", "b")].join(" ")) || "(untitled)",
-    creators: [...sub("100", "a"), ...sub("110", "a"), ...sub("700", "a"), ...sub("710", "a")].map(tidy),
+    uniformTitle: tidy(sub("240", "a")[0] ?? sub("130", "a")[0] ?? "") || null,
+    author: tidy(sub("100", "a")[0] ?? sub("110", "a")[0] ?? "") || null,
+    contributors: [...field("700"), ...field("710")]
+      .filter((f) => !f.subfields.e?.some((role) => role.startsWith("útgefandi")))
+      .flatMap((f) => f.subfields.a ?? [])
+      .map(tidy),
     publisher: publication?.subfields.b?.map(tidy).join("; ") || null,
     date: tidy(publication?.subfields.c?.[0] ?? "") || controlField(record, "008")?.slice(7, 11).trim() || null,
     identifiers: sub("020", "a"),
     format: detectFormat(sub("336", "b"), sub("337", "b")),
+    bibLevel: record.match(/<leader>([^<]*)</)?.[1]?.[7] ?? "",
+    libraries: [...new Set(sub("AVA", "b"))],
   };
 }
 
@@ -110,9 +118,10 @@ function attr(attrs: string, name: string): string {
   return attrs.match(new RegExp(`${name}="([^"]*)"`))?.[1] ?? "";
 }
 
-// Strip trailing ISBD punctuation, e.g. "We have always lived in the castle /".
+// Strip trailing ISBD punctuation, e.g. "We have always lived in the castle /",
+// and the brackets cataloguers put around supplied text, e.g. "[1963]".
 function tidy(s: string): string {
-  return s.replace(/\s*[/:;,.]\s*$/, "").trim();
+  return s.replace(/[[\]]/g, "").replace(/\s*[/:;,.]\s*$/, "").trim();
 }
 
 function decodeXml(s: string): string {
