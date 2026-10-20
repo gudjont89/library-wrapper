@@ -14,6 +14,15 @@ export interface BookResult {
   bibLevel: string;
   // Codes of libraries holding a physical copy.
   libraries: string[];
+  holdings: Holding[];
+}
+
+export interface Holding {
+  library: string;
+  location: string;
+  callNumber: string;
+  copies: number;
+  onLoan: number;
 }
 
 export interface Work {

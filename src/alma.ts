@@ -1,4 +1,4 @@
-import type { BookResult, Format, SearchResponse } from "./types";
+import type { BookResult, Format, Holding, SearchResponse } from "./types";
 
 // Alma SRU endpoint: https://<host>/view/sru/<INSTITUTION_CODE>
 const ALMA_SRU_URL = "https://gegnir.alma.exlibrisgroup.com/view/sru/354ILC_ALM";
@@ -78,6 +78,19 @@ function parseRecord(record: string): BookResult {
     format: detectFormat(sub("336", "b"), sub("337", "b")),
     bibLevel: record.match(/<leader>([^<]*)</)?.[1]?.[7] ?? "",
     libraries: [...new Set(sub("AVA", "b"))],
+    holdings: field("AVA").map(parseHolding),
+  };
+}
+
+// Alma's AVA field: one per library location holding physical copies.
+function parseHolding(ava: DataField): Holding {
+  const first = (code: string) => ava.subfields[code]?.[0] ?? "";
+  return {
+    library: first("b"),
+    location: first("c"),
+    callNumber: first("d"),
+    copies: Number(first("f")) || 0,
+    onLoan: Number(first("g")) || 0,
   };
 }
 

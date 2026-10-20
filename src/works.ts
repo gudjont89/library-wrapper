@@ -51,6 +51,7 @@ function mergeDuplicates(records: BookResult[]): BookResult[] {
     const twin = merged.find((m) => m.identifiers.some((id) => record.identifiers.includes(id)));
     if (twin) {
       twin.libraries = [...new Set([...twin.libraries, ...record.libraries])];
+      twin.holdings = [...twin.holdings, ...record.holdings];
     } else {
       merged.push({ ...record });
     }

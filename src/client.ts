@@ -1,11 +1,13 @@
 import { search } from "./alma";
 import type { BookResult, Format, Work } from "./types";
+import { MY_LIBRARIES } from "./libraries";
 import { rankWorks } from "./works";
 
 const form = document.querySelector<HTMLFormElement>("#search-form")!;
 const status = document.querySelector<HTMLParagraphElement>("#status")!;
 const list = document.querySelector<HTMLUListElement>("#results")!;
 const others = document.querySelector<HTMLDetailsElement>("#others")!;
+const dialog = document.querySelector<HTMLDialogElement>("#edition-dialog")!;
 
 // Editions shown before the rest are folded away.
 const VISIBLE_EDITIONS = 3;
@@ -86,7 +88,11 @@ function renderWork(work: Work): HTMLLIElement {
 
 function renderEdition(edition: BookResult, work: Work): HTMLLIElement {
   const li = document.createElement("li");
-  li.textContent = [
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "edition";
+  button.addEventListener("click", () => showEdition(edition));
+  button.textContent = [
     edition.date,
     edition.title !== work.title ? edition.title : null,
     edition.publisher,
@@ -95,7 +101,53 @@ function renderEdition(edition: BookResult, work: Work): HTMLLIElement {
   ]
     .filter(Boolean)
     .join(" · ");
+
+  const mine = edition.holdings.filter((h) => h.library in MY_LIBRARIES);
+  const copies = mine.reduce((n, h) => n + h.copies, 0);
+  const available = mine.reduce((n, h) => n + h.copies - h.onLoan, 0);
+  li.append(button, ` (${available} of ${copies} available)`);
   return li;
+}
+
+function showEdition(edition: BookResult): void {
+  const heading = document.createElement("h2");
+  heading.textContent = edition.title;
+  const meta = document.createElement("p");
+  meta.className = "meta";
+  meta.textContent = [edition.author, edition.publisher, edition.date].filter(Boolean).join(" · ");
+
+  const table = document.createElement("table");
+  const head = table.createTHead().insertRow();
+  for (const label of ["Library", "Location", "Call number", "Available"]) {
+    head.append(Object.assign(document.createElement("th"), { textContent: label }));
+  }
+  const body = table.createTBody();
+  for (const [code, name] of Object.entries(MY_LIBRARIES)) {
+    const holdings = edition.holdings.filter((h) => h.library === code);
+    if (!holdings.length) {
+      const row = body.insertRow();
+      row.insertCell().textContent = name;
+      Object.assign(row.insertCell(), { colSpan: 3, textContent: "No copies" });
+    }
+    for (const h of holdings) {
+      const row = body.insertRow();
+      row.insertCell().textContent = name;
+      row.insertCell().textContent = h.location;
+      row.insertCell().textContent = h.callNumber;
+      row.insertCell().textContent = `${h.copies - h.onLoan} of ${h.copies}`;
+    }
+  }
+
+  const close = document.createElement("button");
+  close.type = "button";
+  close.textContent = "Close";
+  close.addEventListener("click", () => dialog.close());
+
+  const scroller = document.createElement("div");
+  scroller.className = "table-scroll";
+  scroller.append(table);
+  dialog.replaceChildren(heading, meta, scroller, close);
+  dialog.showModal();
 }
 
 function renderOther(record: BookResult): HTMLLIElement {
