@@ -1,9 +1,18 @@
 import { search } from "./alma";
-import type { BookResult } from "./types";
+import type { BookResult, Format } from "./types";
 
 const form = document.querySelector<HTMLFormElement>("#search-form")!;
 const status = document.querySelector<HTMLParagraphElement>("#status")!;
 const list = document.querySelector<HTMLUListElement>("#results")!;
+
+const FORMAT_LABELS: Record<Format, string> = {
+  book: "Book",
+  ebook: "eBook",
+  audiobook: "Audiobook",
+  film: "Film",
+  music: "Music",
+  score: "Score",
+};
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -13,7 +22,11 @@ form.addEventListener("submit", async (event) => {
   list.replaceChildren();
 
   try {
-    const data = await search(String(fields.get("q") ?? ""), String(fields.get("index") ?? "any"));
+    const data = await search(
+      String(fields.get("q") ?? ""),
+      String(fields.get("index") ?? "any"),
+      String(fields.get("format") ?? "book"),
+    );
     status.textContent = `${data.total} result(s)`;
     list.append(...data.results.map(renderResult));
   } catch (err) {
@@ -28,7 +41,12 @@ function renderResult(book: BookResult): HTMLLIElement {
 
   const meta = document.createElement("div");
   meta.className = "meta";
-  meta.textContent = [book.creators.join("; "), book.publisher, book.date]
+  meta.textContent = [
+    book.format ? FORMAT_LABELS[book.format] : "Other",
+    book.creators.join("; "),
+    book.publisher,
+    book.date,
+  ]
     .filter(Boolean)
     .join(" · ");
 

@@ -6,8 +6,8 @@
   <title>Library Search</title>
   <style>
     body { font-family: system-ui, sans-serif; max-width: 42rem; margin: 2rem auto; padding: 0 1rem; }
-    form { display: flex; gap: .5rem; }
-    input[name=q] { flex: 1; }
+    form { display: flex; flex-wrap: wrap; gap: .5rem; }
+    input[name=q] { flex: 1 1 12rem; }
     input, select, button { font: inherit; padding: .4rem; }
     ul { list-style: none; padding: 0; }
     li { padding: .75rem 0; border-bottom: 1px solid #ddd; }
@@ -24,6 +24,14 @@
       <option value="author">Author</option>
       <option value="subject">Subject</option>
       <option value="isbn">ISBN</option>
+    </select>
+    <select name="format">
+      <option value="book">Book</option>
+      <option value="ebook">eBook</option>
+      <option value="audiobook">Audiobook</option>
+      <option value="film">Film</option>
+      <option value="music">Music</option>
+      <option value="score">Score</option>
     </select>
     <button>Search</button>
   </form>
