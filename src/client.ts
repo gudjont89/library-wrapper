@@ -9,6 +9,9 @@ const list = document.querySelector<HTMLUListElement>("#results")!;
 const others = document.querySelector<HTMLDetailsElement>("#others")!;
 const dialog = document.querySelector<HTMLDialogElement>("#edition-dialog")!;
 
+// Borgarbókasafnið's leitir.is view; append "alma<MMS ID>" to link to a record.
+const LEITIR_PERMALINK = "https://borgarbokasafn.leitir.is/permalink/354ILC_ALM/l6asbj/alma";
+
 // Editions shown before the rest are folded away.
 const VISIBLE_EDITIONS = 3;
 
@@ -115,6 +118,17 @@ function showEdition(edition: BookResult): void {
   const meta = document.createElement("p");
   meta.className = "meta";
   meta.textContent = [edition.author, edition.publisher, edition.date].filter(Boolean).join(" · ");
+  const header = [heading, meta];
+  if (edition.mmsId) {
+    const link = document.createElement("a");
+    link.href = `${LEITIR_PERMALINK}${edition.mmsId}`;
+    link.target = "_blank";
+    link.rel = "noopener";
+    link.textContent = "Open in Borgarbókasafnið's catalogue";
+    const linkLine = document.createElement("p");
+    linkLine.append(link);
+    header.push(linkLine);
+  }
 
   const table = document.createElement("table");
   const head = table.createTHead().insertRow();
@@ -146,7 +160,7 @@ function showEdition(edition: BookResult): void {
   const scroller = document.createElement("div");
   scroller.className = "table-scroll";
   scroller.append(table);
-  dialog.replaceChildren(heading, meta, scroller, close);
+  dialog.replaceChildren(...header, scroller, close);
   dialog.showModal();
 }
 
