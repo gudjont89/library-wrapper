@@ -29,9 +29,10 @@ export function rankWorks(records: BookResult[], query: string, matchTitle: bool
 
   // Map preserves insertion order and sort is stable, so ties keep Alma's order.
   const works = [...groups.values()].map((editions): Work => {
-    editions.sort((a, b) => b.libraries.length - a.libraries.length);
     // Name the work after the best-held edition whose own title matches the search.
-    const named = editions.find((e) => !matchTitle || titleMatches({ ...e, uniformTitle: null })) ?? editions[0]!;
+    const byHoldings = [...editions].sort((a, b) => b.libraries.length - a.libraries.length);
+    const named = byHoldings.find((e) => !matchTitle || titleMatches({ ...e, uniformTitle: null })) ?? byHoldings[0]!;
+    editions.sort((a, b) => year(b.date) - year(a.date));
     return {
       title: named.title,
       author: named.author,
@@ -57,6 +58,11 @@ function mergeDuplicates(records: BookResult[]): BookResult[] {
     }
   }
   return merged;
+}
+
+// First four-digit year in a date like "1986-1987" or "okt. 1994"; undated sorts last.
+function year(date: string | null): number {
+  return Number(date?.match(/\d{4}/)?.[0] ?? 0);
 }
 
 // Word order is ignored so that "Laxness, Halldór" and "Halldór Laxness" match:

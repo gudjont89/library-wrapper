@@ -28,7 +28,7 @@ export interface Holding {
 export interface Work {
   title: string;
   author: string | null;
-  // Most-held edition first.
+  // Newest edition first.
   editions: BookResult[];
   libraryCount: number;
 }
