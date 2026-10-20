@@ -1,4 +1,7 @@
-import type { BookResult, Env, SearchResponse } from "./types";
+import type { BookResult, SearchResponse } from "./types";
+
+// Alma SRU endpoint: https://<host>/view/sru/<INSTITUTION_CODE>
+const ALMA_SRU_URL = "https://gegnir.alma.exlibrisgroup.com/view/sru/354ILC_ALM";
 
 const SEARCH_INDEXES: Record<string, string> = {
   any: "alma.all_for_ui",
@@ -10,24 +13,14 @@ const SEARCH_INDEXES: Record<string, string> = {
 
 const MAX_RECORDS = 20;
 
-export default {
-  async fetch(request, env): Promise<Response> {
-    const url = new URL(request.url);
-    if (url.pathname === "/api/search") {
-      return handleSearch(url, env);
-    }
-    return json({ error: "Not found" }, 404);
-  },
-} satisfies ExportedHandler<Env>;
+export async function search(q: string, indexName = "any"): Promise<SearchResponse> {
+  q = q.trim();
+  if (!q) throw new Error("Enter a search term");
 
-async function handleSearch(url: URL, env: Env): Promise<Response> {
-  const q = url.searchParams.get("q")?.trim();
-  if (!q) return json({ error: "Missing query parameter 'q'" }, 400);
+  const index = SEARCH_INDEXES[indexName];
+  if (!index) throw new Error("Unknown search index");
 
-  const index = SEARCH_INDEXES[url.searchParams.get("index") ?? "any"];
-  if (!index) return json({ error: "Unknown search index" }, 400);
-
-  const sru = new URL(env.ALMA_SRU_URL);
+  const sru = new URL(ALMA_SRU_URL);
   sru.search = new URLSearchParams({
     version: "1.2",
     operation: "searchRetrieve",
@@ -36,14 +29,10 @@ async function handleSearch(url: URL, env: Env): Promise<Response> {
     query: `${index}="${q.replaceAll('"', " ")}"`,
   }).toString();
 
-  const upstream = await fetch(sru, {
-    cf: { cacheTtl: 300, cacheEverything: true },
-  });
-  if (!upstream.ok) {
-    return json({ error: `Alma returned ${upstream.status}` }, 502);
-  }
+  const upstream = await fetch(sru);
+  if (!upstream.ok) throw new Error(`Alma returned ${upstream.status}`);
 
-  return json(parseSru(await upstream.text()));
+  return parseSru(await upstream.text());
 }
 
 function parseSru(xml: string): SearchResponse {
@@ -79,8 +68,4 @@ function decodeXml(s: string): string {
     .replace(/&quot;/g, '"')
     .replace(/&apos;/g, "'")
     .replace(/&amp;/g, "&");
-}
-
-function json(body: unknown, status = 200): Response {
-  return Response.json(body, { status });
 }

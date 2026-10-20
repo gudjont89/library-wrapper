@@ -1,4 +1,5 @@
-import type { BookResult, SearchResponse } from "./types";
+import { search } from "./alma";
+import type { BookResult } from "./types";
 
 const form = document.querySelector<HTMLFormElement>("#search-form")!;
 const status = document.querySelector<HTMLParagraphElement>("#status")!;
@@ -6,16 +7,13 @@ const list = document.querySelector<HTMLUListElement>("#results")!;
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
-  const params = new URLSearchParams(new FormData(form) as unknown as Record<string, string>);
+  const fields = new FormData(form);
 
   status.textContent = "Searching…";
   list.replaceChildren();
 
   try {
-    const res = await fetch(`/api/search?${params}`);
-    const data = (await res.json()) as SearchResponse & { error?: string };
-    if (!res.ok) throw new Error(data.error ?? res.statusText);
-
+    const data = await search(String(fields.get("q") ?? ""), String(fields.get("index") ?? "any"));
     status.textContent = `${data.total} result(s)`;
     list.append(...data.results.map(renderResult));
   } catch (err) {

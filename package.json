@@ -4,15 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build:client": "esbuild src/client.ts --bundle --minify --outfile=public/app.js",
-    "dev": "npm run build:client && wrangler dev",
-    "deploy": "npm run build:client && wrangler deploy",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.client.json"
+    "build": "esbuild src/client.ts --bundle --minify --outfile=public/app.js",
+    "dev": "esbuild src/client.ts --bundle --outfile=public/app.js --servedir=public",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20261019.1",
     "esbuild": "^0.25.0",
-    "typescript": "^5.7.0",
-    "wrangler": "^4.0.0"
+    "typescript": "^5.7.0"
   }
 }

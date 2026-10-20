@@ -1,7 +1,3 @@
-export interface Env {
-  ALMA_SRU_URL: string;
-}
-
 export interface BookResult {
   mmsId: string | null;
   title: string;

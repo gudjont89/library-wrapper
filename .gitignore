@@ -1,4 +1,2 @@
 node_modules
-.wrangler
 public/app.js
-.dev.vars
