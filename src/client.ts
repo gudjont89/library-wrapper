@@ -143,9 +143,10 @@ function showEdition(edition: BookResult): void {
       row.insertCell().textContent = name;
       Object.assign(row.insertCell(), { colSpan: 3, textContent: "No copies" });
     }
-    for (const h of holdings) {
+    for (const [i, h] of holdings.entries()) {
       const row = body.insertRow();
-      row.insertCell().textContent = name;
+      // Name the library only on its first line.
+      row.insertCell().textContent = i === 0 ? name : "";
       row.insertCell().textContent = h.location;
       row.insertCell().textContent = h.callNumber;
       row.insertCell().textContent = `${h.copies - h.onLoan} of ${h.copies}`;
