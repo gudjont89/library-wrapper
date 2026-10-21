@@ -1,3 +1,4 @@
+import { copiesAtMyLibraries } from "./libraries";
 import type { BookResult, Work } from "./types";
 
 export interface RankedResults {
@@ -32,7 +33,9 @@ export function rankWorks(records: BookResult[], query: string, matchTitle: bool
     // Name the work after the best-held edition whose own title matches the search.
     const byHoldings = [...editions].sort((a, b) => b.libraries.length - a.libraries.length);
     const named = byHoldings.find((e) => !matchTitle || titleMatches({ ...e, uniformTitle: null })) ?? byHoldings[0]!;
-    editions.sort((a, b) => year(b.date) - year(a.date));
+    editions.sort(
+      (a, b) => copiesAtMyLibraries(b).copies - copiesAtMyLibraries(a).copies || year(b.date) - year(a.date),
+    );
     return {
       title: named.title,
       author: named.author,

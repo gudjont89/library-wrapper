@@ -1,6 +1,6 @@
 import { search } from "./alma";
 import type { BookResult, Format, Work } from "./types";
-import { MY_LIBRARIES } from "./libraries";
+import { copiesAtMyLibraries, MY_LIBRARIES } from "./libraries";
 import { rankWorks } from "./works";
 
 const form = document.querySelector<HTMLFormElement>("#search-form")!;
@@ -105,9 +105,7 @@ function renderEdition(edition: BookResult, work: Work): HTMLLIElement {
     .filter(Boolean)
     .join(" · ");
 
-  const mine = edition.holdings.filter((h) => h.library in MY_LIBRARIES);
-  const copies = mine.reduce((n, h) => n + h.copies, 0);
-  const available = mine.reduce((n, h) => n + h.copies - h.onLoan, 0);
+  const { copies, available } = copiesAtMyLibraries(edition);
   li.append(button, ` (${available} of ${copies} available)`);
   return li;
 }
