@@ -25,6 +25,8 @@ export function rankWorks(records: BookResult[], query: string, matchTitle: bool
       others.push(record);
       continue;
     }
+    // Skip editions with no copies at MY_LIBRARIES; online resources have none and are kept.
+    if (!record.online && copies(record) === 0) continue;
     const key = `${authorKey(record.author)}|${normalize(record.uniformTitle ?? record.title.split(":")[0]!)}`;
     groups.set(key, [...(groups.get(key) ?? []), record]);
   }

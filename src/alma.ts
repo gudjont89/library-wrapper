@@ -79,6 +79,7 @@ function parseRecord(record: string): BookResult {
     language: controlField(record, "008")?.slice(35, 38).trim() || null,
     bibLevel: record.match(/<leader>([^<]*)</)?.[1]?.[7] ?? "",
     holdings: field("AVA").map(parseHolding),
+    online: field("AVE").length > 0,
   };
 }
 

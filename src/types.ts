@@ -15,6 +15,8 @@ export interface BookResult {
   // MARC leader/07: m = standalone book, a = part of a book, b = journal article, s = serial.
   bibLevel: string;
   holdings: Holding[];
+  // Available electronically (Alma AVE field), e.g. eBooks on Rafbókasafnið.
+  online: boolean;
 }
 
 export interface Holding {
