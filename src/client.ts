@@ -65,7 +65,6 @@ function renderWork(work: Work): HTMLLIElement {
     format ? FORMAT_LABELS[format] : "Other",
     work.author,
     plural(work.editions.length, "edition"),
-    work.libraryCount ? `held by ${plural(work.libraryCount, "library", "libraries")}` : null,
   ]
     .filter(Boolean)
     .join(" · ");
@@ -100,7 +99,6 @@ function renderEdition(edition: BookResult, work: Work): HTMLLIElement {
     edition.title !== work.title ? edition.title : null,
     edition.publisher,
     edition.contributors.join("; "),
-    edition.libraries.length ? plural(edition.libraries.length, "library", "libraries") : null,
   ]
     .filter(Boolean)
     .join(" · ");

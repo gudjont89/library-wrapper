@@ -7,7 +7,8 @@ export interface RankedResults {
   others: BookResult[];
 }
 
-// Groups records into works and ranks them by how many libraries hold them.
+// Groups records into works and ranks works and editions by their copies at
+// MY_LIBRARIES, then by newest edition.
 // With `matchTitle`, only records whose title contains every search word count
 // as main results; the rest go to `others`.
 export function rankWorks(records: BookResult[], query: string, matchTitle: boolean): RankedResults {
@@ -30,20 +31,14 @@ export function rankWorks(records: BookResult[], query: string, matchTitle: bool
 
   // Map preserves insertion order and sort is stable, so ties keep Alma's order.
   const works = [...groups.values()].map((editions): Work => {
-    // Name the work after the best-held edition whose own title matches the search.
-    const byHoldings = [...editions].sort((a, b) => b.libraries.length - a.libraries.length);
-    const named = byHoldings.find((e) => !matchTitle || titleMatches({ ...e, uniformTitle: null })) ?? byHoldings[0]!;
-    editions.sort(
-      (a, b) => copiesAtMyLibraries(b).copies - copiesAtMyLibraries(a).copies || year(b.date) - year(a.date),
-    );
-    return {
-      title: named.title,
-      author: named.author,
-      editions,
-      libraryCount: new Set(editions.flatMap((e) => e.libraries)).size,
-    };
+    editions.sort((a, b) => copies(b) - copies(a) || year(b.date) - year(a.date));
+    // Name the work after its first edition whose own title matches the search.
+    const named = editions.find((e) => !matchTitle || titleMatches({ ...e, uniformTitle: null })) ?? editions[0]!;
+    return { title: named.title, author: named.author, editions };
   });
-  works.sort((a, b) => b.libraryCount - a.libraryCount);
+  const workCopies = (w: Work) => w.editions.reduce((n, e) => n + copies(e), 0);
+  const newest = (w: Work) => Math.max(...w.editions.map((e) => year(e.date)));
+  works.sort((a, b) => workCopies(b) - workCopies(a) || newest(b) - newest(a));
 
   return { works, others };
 }
@@ -54,13 +49,16 @@ function mergeDuplicates(records: BookResult[]): BookResult[] {
   for (const record of records) {
     const twin = merged.find((m) => m.identifiers.some((id) => record.identifiers.includes(id)));
     if (twin) {
-      twin.libraries = [...new Set([...twin.libraries, ...record.libraries])];
       twin.holdings = [...twin.holdings, ...record.holdings];
     } else {
       merged.push({ ...record });
     }
   }
   return merged;
+}
+
+function copies(edition: BookResult): number {
+  return copiesAtMyLibraries(edition).copies;
 }
 
 // First four-digit year in a date like "1986-1987" or "okt. 1994"; undated sorts last.

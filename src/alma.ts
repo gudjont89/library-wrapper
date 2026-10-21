@@ -77,7 +77,6 @@ function parseRecord(record: string): BookResult {
     identifiers: sub("020", "a"),
     format: detectFormat(sub("336", "b"), sub("337", "b")),
     bibLevel: record.match(/<leader>([^<]*)</)?.[1]?.[7] ?? "",
-    libraries: [...new Set(sub("AVA", "b"))],
     holdings: field("AVA").map(parseHolding),
   };
 }

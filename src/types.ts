@@ -12,8 +12,6 @@ export interface BookResult {
   format: Format | null;
   // MARC leader/07: m = standalone book, a = part of a book, b = journal article, s = serial.
   bibLevel: string;
-  // Codes of libraries holding a physical copy.
-  libraries: string[];
   holdings: Holding[];
 }
 
@@ -30,7 +28,6 @@ export interface Work {
   author: string | null;
   // Most copies at MY_LIBRARIES first, then newest first.
   editions: BookResult[];
-  libraryCount: number;
 }
 
 export interface SearchResponse {
