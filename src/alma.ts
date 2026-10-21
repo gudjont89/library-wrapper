@@ -1,38 +1,18 @@
-import type { BookResult, Format, Holding, SearchResponse } from "./types";
+import type { BookResult, Holding, SearchResponse } from "./types";
 
 // Alma SRU endpoint: https://<host>/view/sru/<INSTITUTION_CODE>
 const ALMA_SRU_URL = "https://gegnir.alma.exlibrisgroup.com/view/sru/354ILC_ALM";
 
-const SEARCH_INDEXES: Record<string, string> = {
-  any: "alma.all_for_ui",
-  title: "alma.title",
-  author: "alma.creator",
-  subject: "alma.subjects",
-  isbn: "alma.isbn",
-};
-
-// SRU clauses on RDA content type (MARC 336) and media type (MARC 337).
-const FORMAT_FILTERS: Record<Format, string> = {
-  book: "alma.content_type_code=txt and alma.media_type_code=n and alma.bib_level=m",
-  ebook: "alma.content_type_code=txt and alma.media_type_code=c",
-  audiobook: "alma.content_type_code=spw",
-  film: "alma.content_type_code=tdi",
-  music: "alma.content_type_code=prm",
-  score: "alma.content_type_code=ntm",
-};
+// Printed standalone books only: RDA content type text (MARC 336), media type
+// unmediated (MARC 337), and bibliographic level monograph (leader/07).
+const BOOK_FILTER = "alma.content_type_code=txt and alma.media_type_code=n and alma.bib_level=m";
 
 // The most Alma returns per request.
 const MAX_RECORDS = 50;
 
-export async function search(q: string, indexName = "any", format = "book"): Promise<SearchResponse> {
+export async function search(q: string): Promise<SearchResponse> {
   q = q.trim();
   if (!q) throw new Error("Enter a search term");
-
-  const index = SEARCH_INDEXES[indexName];
-  if (!index) throw new Error("Unknown search index");
-
-  const filter = FORMAT_FILTERS[format as Format];
-  if (!filter) throw new Error("Unknown format");
 
   const sru = new URL(ALMA_SRU_URL);
   sru.search = new URLSearchParams({
@@ -40,7 +20,7 @@ export async function search(q: string, indexName = "any", format = "book"): Pro
     operation: "searchRetrieve",
     recordSchema: "marcxml",
     maximumRecords: String(MAX_RECORDS),
-    query: `${index}="${q.replaceAll('"', " ")}" and ${filter}`,
+    query: `alma.all_for_ui="${q.replaceAll('"', " ")}" and ${BOOK_FILTER}`,
   }).toString();
 
   const upstream = await fetch(sru);
@@ -75,11 +55,10 @@ function parseRecord(record: string): BookResult {
     publisher: publication?.subfields.b?.map(tidy).join("; ") || null,
     date: tidy(publication?.subfields.c?.[0] ?? "") || controlField(record, "008")?.slice(7, 11).trim() || null,
     identifiers: sub("020", "a"),
-    format: detectFormat(sub("336", "b"), sub("337", "b")),
     language: controlField(record, "008")?.slice(35, 38).trim() || null,
+    literaryForm: controlField(record, "008")?.[33] ?? "",
     bibLevel: record.match(/<leader>([^<]*)</)?.[1]?.[7] ?? "",
     holdings: field("AVA").map(parseHolding),
-    online: field("AVE").length > 0,
   };
 }
 
@@ -93,18 +72,6 @@ function parseHolding(ava: DataField): Holding {
     copies: Number(first("f")) || 0,
     onLoan: Number(first("g")) || 0,
   };
-}
-
-function detectFormat(content: string[], media: string[]): Format | null {
-  if (content.includes("spw")) return "audiobook";
-  if (content.includes("tdi")) return "film";
-  if (content.includes("prm")) return "music";
-  if (content.includes("ntm")) return "score";
-  if (content.includes("txt")) {
-    if (media.includes("c")) return "ebook";
-    if (media.includes("n")) return "book";
-  }
-  return null;
 }
 
 interface DataField {

@@ -1,6 +1,6 @@
 import { polyfillCountryFlagEmojis } from "country-flag-emoji-polyfill";
 import { search } from "./alma";
-import type { BookResult, Format, Work } from "./types";
+import type { BookResult, Work } from "./types";
 import { languageMark } from "./languages";
 import { copiesAtMyLibraries, MY_LIBRARIES } from "./libraries";
 import { rankWorks } from "./works";
@@ -20,28 +20,18 @@ const LEITIR_PERMALINK = "https://borgarbokasafn.leitir.is/permalink/354ILC_ALM/
 // Editions shown before the rest are folded away.
 const VISIBLE_EDITIONS = 3;
 
-const FORMAT_LABELS: Record<Format, string> = {
-  book: "Book",
-  ebook: "eBook",
-  audiobook: "Audiobook",
-  film: "Film",
-  music: "Music",
-  score: "Score",
-};
-
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   const fields = new FormData(form);
   const q = String(fields.get("q") ?? "");
-  const index = String(fields.get("index") ?? "any");
 
   status.textContent = "Searching…";
   list.replaceChildren();
   others.hidden = true;
 
   try {
-    const data = await search(q, index, String(fields.get("format") ?? "book"));
-    const ranked = rankWorks(data.results, q, index === "any" || index === "title");
+    const data = await search(q);
+    const ranked = rankWorks(data.results, q);
 
     const shown = data.results.length < data.total ? ` (showing the first ${data.results.length})` : "";
     status.textContent = `${data.total} record(s)${shown}, ${plural(ranked.works.length, "work")}`;
@@ -65,9 +55,7 @@ function renderWork(work: Work): HTMLLIElement {
 
   const meta = document.createElement("div");
   meta.className = "meta";
-  const format = work.editions[0]!.format;
   meta.textContent = [
-    format ? FORMAT_LABELS[format] : "Other",
     work.author,
     plural(work.editions.length, "edition"),
   ]

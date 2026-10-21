@@ -9,9 +9,9 @@ export interface RankedResults {
 
 // Groups records into works and ranks works and editions by their copies at
 // MY_LIBRARIES, then by newest edition.
-// With `matchTitle`, only records whose title contains every search word count
-// as main results; the rest go to `others`.
-export function rankWorks(records: BookResult[], query: string, matchTitle: boolean): RankedResults {
+// Only records whose title contains every search word count as main results;
+// the rest go to `others`.
+export function rankWorks(records: BookResult[], query: string): RankedResults {
   const words = normalize(query).split(" ").filter(Boolean);
   const titleMatches = (r: BookResult) => {
     const title = ` ${normalize(`${r.title} ${r.uniformTitle ?? ""}`)} `;
@@ -21,13 +21,21 @@ export function rankWorks(records: BookResult[], query: string, matchTitle: bool
   const groups = new Map<string, BookResult[]>();
   const others: BookResult[] = [];
   for (const record of mergeDuplicates(records)) {
-    if (matchTitle && !titleMatches(record)) {
+    if (!titleMatches(record)) {
       others.push(record);
       continue;
     }
-    // Skip editions with no copies at MY_LIBRARIES; online resources have none and are kept.
-    if (!record.online && copies(record) === 0) continue;
-    const key = `${authorKey(record.author)}|${normalize(record.uniformTitle ?? record.title.split(":")[0]!)}`;
+    // Skip editions with no copies at MY_LIBRARIES.
+    if (copies(record) === 0) continue;
+    // Dramas get their own works. Example: searching "feður og synir" finds Leikfélag
+    // Reykjavíkur's 1998 programme for a stage adaptation of Turgenev's Fathers and Sons
+    // (990003990920106893). It is catalogued with Turgenev as author and the novel's
+    // uniform title "Otsy í detí", so without this it grouped with the 1947 translation of
+    // the novel (990003991100106893) and, having more copies, gave the work its name.
+    // Only "d" splits works, since literary form is often left uncoded ("|" or blank).
+    // Subjects (650 "Leikskrár", "Leikrit") could refine this if adaptations still slip through.
+    const form = record.literaryForm === "d" ? "|drama" : "";
+    const key = `${authorKey(record.author)}|${normalize(record.uniformTitle ?? record.title.split(":")[0]!)}${form}`;
     groups.set(key, [...(groups.get(key) ?? []), record]);
   }
 
@@ -35,7 +43,7 @@ export function rankWorks(records: BookResult[], query: string, matchTitle: bool
   const works = [...groups.values()].map((editions): Work => {
     editions.sort((a, b) => copies(b) - copies(a) || year(b.date) - year(a.date));
     // Name the work after its first edition whose own title matches the search.
-    const named = editions.find((e) => !matchTitle || titleMatches({ ...e, uniformTitle: null })) ?? editions[0]!;
+    const named = editions.find((e) => titleMatches({ ...e, uniformTitle: null })) ?? editions[0]!;
     return { title: named.title, author: named.author, editions };
   });
   const workCopies = (w: Work) => w.editions.reduce((n, e) => n + copies(e), 0);
