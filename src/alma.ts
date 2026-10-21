@@ -76,6 +76,7 @@ function parseRecord(record: string): BookResult {
     date: tidy(publication?.subfields.c?.[0] ?? "") || controlField(record, "008")?.slice(7, 11).trim() || null,
     identifiers: sub("020", "a"),
     format: detectFormat(sub("336", "b"), sub("337", "b")),
+    language: controlField(record, "008")?.slice(35, 38).trim() || null,
     bibLevel: record.match(/<leader>([^<]*)</)?.[1]?.[7] ?? "",
     holdings: field("AVA").map(parseHolding),
   };

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Library Search</title>
   <style>
-    body { font-family: system-ui, sans-serif; max-width: 42rem; margin: 2rem auto; padding: 0 1rem; }
+    body { font-family: "Twemoji Country Flags", system-ui, sans-serif; max-width: 42rem; margin: 2rem auto; padding: 0 1rem; }
     form { display: flex; flex-wrap: wrap; gap: .5rem; }
     input[name=q] { flex: 1 1 12rem; }
     input, select, button { font: inherit; padding: .4rem; }
@@ -16,6 +16,13 @@
     .editions li { padding: .15rem 0; border: 0; }
     button.edition { font-size: inherit; padding: 0; border: 0; background: none; color: inherit; text-align: left; cursor: pointer; }
     button.edition:hover { text-decoration: underline; }
+    .language { position: relative; display: inline-block; min-width: 1.4em; font-size: 1.2em; line-height: 1; vertical-align: -.1em; }
+    .language.code { font-size: .8em; color: #666; vertical-align: baseline; }
+    .language:hover::after {
+      content: attr(data-name); position: absolute; left: 50%; top: 100%; transform: translateX(-50%); margin-top: .3rem;
+      padding: .3rem .5rem; border: 1px solid #999; background: #fff; color: #000;
+      font-size: .8rem; line-height: 1.2; white-space: nowrap; z-index: 1; pointer-events: none;
+    }
     dialog { width: min(40rem, calc(100% - 2rem)); box-sizing: border-box; }
     dialog h2 { margin: 0 0 .25rem; font-size: 1.1rem; }
     .table-scroll { overflow-x: auto; margin: 1rem 0; }

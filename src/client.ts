@@ -1,5 +1,7 @@
+import { polyfillCountryFlagEmojis } from "country-flag-emoji-polyfill";
 import { search } from "./alma";
 import type { BookResult, Format, Work } from "./types";
+import { languageMark } from "./languages";
 import { copiesAtMyLibraries, MY_LIBRARIES } from "./libraries";
 import { rankWorks } from "./works";
 
@@ -8,6 +10,9 @@ const status = document.querySelector<HTMLParagraphElement>("#status")!;
 const list = document.querySelector<HTMLUListElement>("#results")!;
 const others = document.querySelector<HTMLDetailsElement>("#others")!;
 const dialog = document.querySelector<HTMLDialogElement>("#edition-dialog")!;
+
+// Windows browsers have no flag emoji; this loads a flag font where needed.
+polyfillCountryFlagEmojis();
 
 // Borgarbókasafnið's leitir.is view; append "alma<MMS ID>" to link to a record.
 const LEITIR_PERMALINK = "https://borgarbokasafn.leitir.is/permalink/354ILC_ALM/l6asbj/alma";
@@ -102,6 +107,18 @@ function renderEdition(edition: BookResult, work: Work): HTMLLIElement {
   ]
     .filter(Boolean)
     .join(" · ");
+
+  if (edition.language) {
+    const { mark, name, isFlag } = languageMark(edition.language);
+    const language = document.createElement("span");
+    language.className = isFlag ? "language" : "language code";
+    language.textContent = mark;
+    // Shown by a CSS tooltip; the native title tooltip can't be styled.
+    language.dataset.name = name;
+    language.setAttribute("role", "img");
+    language.setAttribute("aria-label", name);
+    li.append(language, " ");
+  }
 
   const { copies, available } = copiesAtMyLibraries(edition);
   li.append(button, ` (${available} of ${copies} available)`);

@@ -10,6 +10,8 @@ export interface BookResult {
   date: string | null;
   identifiers: string[];
   format: Format | null;
+  // MARC language code from 008/35-37, e.g. "ice", "eng".
+  language: string | null;
   // MARC leader/07: m = standalone book, a = part of a book, b = journal article, s = serial.
   bibLevel: string;
   holdings: Holding[];

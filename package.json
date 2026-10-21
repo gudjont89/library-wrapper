@@ -11,5 +11,8 @@
   "devDependencies": {
     "esbuild": "^0.25.0",
     "typescript": "^5.7.0"
+  },
+  "dependencies": {
+    "country-flag-emoji-polyfill": "0.1.10"
   }
 }
