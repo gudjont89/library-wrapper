@@ -55,11 +55,26 @@ function parseRecord(record: string): BookResult {
     publisher: publication?.subfields.b?.map(tidy).join("; ") || null,
     date: tidy(publication?.subfields.c?.[0] ?? "") || controlField(record, "008")?.slice(7, 11).trim() || null,
     identifiers: sub("020", "a"),
+    pages: parsePages(sub("300", "a")[0]),
+    heightCm: parseHeightCm(sub("300", "c")[0]),
     language: controlField(record, "008")?.slice(35, 38).trim() || null,
     literaryForm: controlField(record, "008")?.[33] ?? "",
     bibLevel: record.match(/<leader>([^<]*)</)?.[1]?.[7] ?? "",
     holdings: field("AVA").map(parseHolding),
   };
+}
+
+// 300 $a is free text, e.g. "242, [4] bls. ;" or "33 bls., 1 ótölusett bls. :".
+// Takes the first number that is followed by "bls", i.e. the numbered pages.
+function parsePages(extent: string | undefined): number | null {
+  const pages = extent?.match(/(\d+)[^a-z]*bls/i)?.[1];
+  return pages ? Number(pages) : null;
+}
+
+// 300 $c holds the height only, e.g. "21 sm." or "19 sm +"; "sm" is Icelandic for cm.
+function parseHeightCm(dimensions: string | undefined): number | null {
+  const height = dimensions?.match(/(\d+(?:[.,]\d+)?)\s*sm/i)?.[1];
+  return height ? Number(height.replace(",", ".")) : null;
 }
 
 // Alma's AVA field: one per library location holding physical copies.

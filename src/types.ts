@@ -7,6 +7,9 @@ export interface BookResult {
   publisher: string | null;
   date: string | null;
   identifiers: string[];
+  // Page count and height in cm parsed from MARC 300; null when absent or unparseable.
+  pages: number | null;
+  heightCm: number | null;
   // MARC language code from 008/35-37, e.g. "ice", "eng".
   language: string | null;
   // MARC 008/33 for books: d = drama, f = novel, j = short stories, 0 = non-fiction, | = not coded.

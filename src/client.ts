@@ -92,6 +92,7 @@ function renderEdition(edition: BookResult, work: Work): HTMLLIElement {
     edition.title !== work.title ? edition.title : null,
     edition.publisher,
     edition.contributors.join("; "),
+    physicalDescription(edition),
   ]
     .filter(Boolean)
     .join(" · ");
@@ -118,7 +119,7 @@ function showEdition(edition: BookResult): void {
   heading.textContent = edition.title;
   const meta = document.createElement("p");
   meta.className = "meta";
-  meta.textContent = [edition.author, edition.publisher, edition.date].filter(Boolean).join(" · ");
+  meta.textContent = [edition.author, edition.publisher, edition.date, physicalDescription(edition)].filter(Boolean).join(" · ");
   const header = [heading, meta];
   if (edition.mmsId) {
     const link = document.createElement("a");
@@ -164,6 +165,12 @@ function showEdition(edition: BookResult): void {
   scroller.append(table);
   dialog.replaceChildren(...header, scroller, close);
   dialog.showModal();
+}
+
+function physicalDescription(edition: BookResult): string {
+  return [edition.pages && `${edition.pages} pp.`, edition.heightCm && `${edition.heightCm} cm`]
+    .filter(Boolean)
+    .join(", ");
 }
 
 function renderOther(record: BookResult): HTMLLIElement {
